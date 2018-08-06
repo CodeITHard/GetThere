@@ -37,7 +37,7 @@ Optional features (need to be detailed)
 
 Here's a walkthrough of implemented user stories:
 
-[Image link]()
+[Wireframes](https://imgur.com/a/6gTe6C7)
 
 
 
