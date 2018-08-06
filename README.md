@@ -8,17 +8,17 @@ Time spent: **X** hours spent in total
 
 
 
-[]An User can register in order to be able to login
-[]An user can login in order to use the app
-[]An user can log out for security reasons
-[]An user can change his account information
-[]An user can delete his account in order to not use the app anymore
-[]An user can search an pinpoint a place on the map in order to determine his destination
-[]An user can send a broadcast with the pinpointed place to the chauffeurs
-[]An user can be able to see when the chauffeur will approximately arrive
-[]An user can be able to list his previous orders
-[]A chauffer can accept the request
-[]A chauffeur will be alerted (at peak hour) with places where lots of users are assembled
+[ ]An User can register in order to be able to login
+[ ]An user can login in order to use the app
+[ ]An user can log out for security reasons
+[ ]An user can change his account information
+[ ]An user can delete his account in order to not use the app anymore
+[ ]An user can search an pinpoint a place on the map in order to determine his destination
+[ ]An user can send a broadcast with the pinpointed place to the chauffeurs
+[ ]An user can be able to see when the chauffeur will approximately arrive
+[ ]An user can be able to list his previous orders
+[ ]A chauffer can accept the request
+[ ]A chauffeur will be alerted (at peak hour) with places where lots of users are assembled
 
 
 
