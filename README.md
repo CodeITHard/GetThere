@@ -12,7 +12,7 @@ The following **required** functionality is completed:
 
 Here's a walkthrough of implemented user stories:
 
-<img src='https://imgur.com/a/Ovx4hFf.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
+[Image link]()
 
 
 
