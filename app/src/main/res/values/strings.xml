@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Get There</string>
+    <string name="facebook_app_id">260150627936594</string>
+    <string name="fb_login_protocol_scheme">fb260150627936594</string>
 </resources>

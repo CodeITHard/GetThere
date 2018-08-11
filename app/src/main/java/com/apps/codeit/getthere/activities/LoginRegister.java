@@ -1,5 +1,6 @@
 package com.apps.codeit.getthere.activities;
 
+import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -10,19 +11,29 @@ import com.apps.codeit.getthere.R;
 import com.apps.codeit.getthere.adapters.ViewPagerAdapter;
 import com.apps.codeit.getthere.fragments.Login;
 import com.apps.codeit.getthere.fragments.Register;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginRegister extends AppCompatActivity {
 
     Toolbar toolbar;
 
+    public static FirebaseAuth firebaseAuth;
+    public static FirebaseUser currentUser;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_login_register);
 
         toolbar = findViewById(R.id.login_register_toolbar);
         setSupportActionBar(toolbar);
         this.getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+        firebaseAuth = FirebaseAuth.getInstance();
+
+
 
         ViewPager viewPager = findViewById(R.id.login_register_viewpager);
         setupViewPager(viewPager);
@@ -32,6 +43,16 @@ public class LoginRegister extends AppCompatActivity {
         tabLayout.setupWithViewPager(viewPager);
 
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        currentUser = firebaseAuth.getCurrentUser();
+        if(currentUser != null){
+            startActivity(new Intent(this, MainMap.class));
+            finish();
+        }
     }
 
     private void setupViewPager(ViewPager viewPager) {

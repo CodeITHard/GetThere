@@ -2,6 +2,84 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:showDividers="middle"
+    android:divider="@drawable/divider"
+    android:background="@color/background">
+
+    <android.support.design.widget.TextInputLayout
+        android:elevation="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:id="@+id/register_email_input_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/register_email_input"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:inputType="textEmailAddress"
+            android:background="@drawable/edittext_bg"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:hint="Email"/>
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:elevation="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:id="@+id/register_password_input_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/register_password_input"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:inputType="textPassword"
+            android:background="@drawable/edittext_bg"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:hint="Password"/>
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:elevation="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:id="@+id/register_user_name_input_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/register_user_name_input"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:inputType="text"
+            android:background="@drawable/edittext_bg"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:hint="Username"/>
+    </android.support.design.widget.TextInputLayout>
+
+    <Button
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:id="@+id/register_button_register"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Login"
+        android:background="#00ffffff"/>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_centerInParent="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="------OR------"/>
+
+    </RelativeLayout>
 
 </LinearLayout>
