@@ -1,5 +1,6 @@
 package com.apps.codeit.getthere.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -13,6 +14,7 @@ import android.widget.EditText;
 
 import com.apps.codeit.getthere.R;
 import com.apps.codeit.getthere.activities.LoginRegister;
+import com.apps.codeit.getthere.activities.MainMap;
 import com.apps.codeit.getthere.listeners.MyTextWatcher;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -72,6 +74,8 @@ public class Register extends Fragment implements View.OnClickListener{
             case R.id.register_button_register:
                 // Calling the create user method when clicking the button
                 registerUser(register_email_input.getText().toString().trim(), register_password_input.getText().toString().trim());
+                register_email_input.setText("");
+                register_password_input.setText("");
                 break;
         }
     }
@@ -83,7 +87,8 @@ public class Register extends Fragment implements View.OnClickListener{
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()){
-                            //
+                            startActivity(new Intent(getActivity(), MainMap.class));
+                            getActivity().finish();
                         }
                         else {
                             //

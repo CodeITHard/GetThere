@@ -6,8 +6,60 @@
     android:layout_height="match_parent"
     tools:context=".activities.MainMap">
 
-    <com.google.android.gms.maps.MapView
+    <!--
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <include
+            layout="@layout/toolbar"
+            android:id="@+id/mainmap_toolbar"/>
+    </android.support.design.widget.AppBarLayout>
+    -->
+
+    <!--
+        <com.google.android.gms.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+        -->
+
+    <fragment
+        android:id="@+id/mapfragment"
+        android:name="com.google.android.gms.maps.MapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"/>
+
+    <AutoCompleteTextView
+        android:id="@+id/mainmap_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Search a location"
+        android:layout_margin="8dp"
+        android:drawableEnd="@android:drawable/ic_menu_search"
+        android:drawableStart="@android:drawable/ic_menu_more"
+        android:background="@drawable/edittext_bg"
+        android:imeOptions="actionSearch"
+        android:focusable="true"
+        android:elevation="4dp"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/mainmap_send"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="8dp"
+        android:src="@drawable/ic_send"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/mainmap_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/mainmap_search"
+        android:layout_margin="8dp"
+        android:src="@drawable/ic_location"/>
+
 </RelativeLayout>
