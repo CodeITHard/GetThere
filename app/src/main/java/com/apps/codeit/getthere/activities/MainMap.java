@@ -2,11 +2,14 @@ package com.apps.codeit.getthere.activities;
 
 import android.Manifest;
 import android.app.Dialog;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Handler;
+import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -23,7 +26,9 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.apps.codeit.getthere.R;
+import com.apps.codeit.getthere.constants.Constants;
 import com.apps.codeit.getthere.listeners.MyTextWatcher;
+import com.apps.codeit.getthere.services.FetchAddressIntentService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -36,6 +41,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.parceler.Parcels;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,10 +54,14 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMarkerClickListener{
 
+    protected String mLastLocation;
+    private AddressResultReceiver mResultReceiver;
+
     private AutoCompleteTextView mainmap_search;
 
     GoogleMap mGoogleMap;
     private GoogleApiClient googleApiClient;
+    private Geocoder geocoder;
 
     List<Address> addresses;
     ArrayAdapter<Address> adapter;
@@ -72,6 +83,8 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+
+        geocoder = new Geocoder(this);
 
         addresses = new ArrayList<>();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, addresses);
@@ -103,23 +116,30 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                Geocoder geocoder = new Geocoder(getApplicationContext());
-                try {
-                    addresses = geocoder.getFromLocationName(charSequence.toString(), 5);
-                    adapter.notifyDataSetChanged();
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                mLastLocation = charSequence.toString().trim();
             }
 
             @Override
             public void afterTextChanged(Editable editable) {
+                if (editable.length() >= 3){
+                    startIntentService();
+                }
 
             }
         });
 
+        //startIntentService();
+
     }
+
+    protected void startIntentService() {
+        Intent intent = new Intent(this, FetchAddressIntentService.class);
+        //intent.putExtra(Constants.RECEIVER, mResultReceiver);
+        //intent.putExtra(Constants.LOCATION_DATA_EXTRA, mLastLocation);
+        intent.putExtra("location", mLastLocation);
+        startService(intent);
+    }
+
 
     //Requesting permissions
     private void requestPermission(){
@@ -231,4 +251,32 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         googleApiClient.disconnect();
         super.onStop();
     }
+
+    class AddressResultReceiver extends ResultReceiver {
+        public AddressResultReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+            if (resultData == null) {
+                return;
+            }
+
+            // Display the address string
+            // or an error message sent from the intent service.
+            //mAddressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
+            List<Address> result = Parcels.unwrap(resultData.getParcelable(Constants.RESULT_DATA_KEY));
+            addresses.addAll(result);
+            adapter.notifyDataSetChanged();
+
+            // Show a toast message if an address was found.
+            if (resultCode == Constants.SUCCESS_RESULT) {
+                //showToast(getString(R.string.address_found));
+            }
+
+        }
+    }
+
 }
