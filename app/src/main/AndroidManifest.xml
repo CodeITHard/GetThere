@@ -22,13 +22,15 @@
         android:theme="@style/AppTheme">
         <activity android:name=".activities.LoginRegister">
             <!-- |||||||| -->
-        </activity>
-        <activity android:name=".activities.MainMap">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".activities.MainMap">
+
+            <!-- |||||||| -->
         </activity>
         <meta-data android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id"/>
@@ -53,7 +55,7 @@
             android:value="AIzaSyBMmAZzi1ok9ZzDq3CDWChpoYYBFBQe7h8"/>
 
         <service
-            android:name=".services.FetchAddressIntentService"
+            android:name=".services.AddressByNameIntentService"
             android:exported="false"/>
 
 

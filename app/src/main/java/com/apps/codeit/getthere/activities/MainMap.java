@@ -1,34 +1,42 @@
 package com.apps.codeit.getthere.activities;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.AdapterView;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.apps.codeit.getthere.R;
 import com.apps.codeit.getthere.constants.Constants;
-import com.apps.codeit.getthere.listeners.MyTextWatcher;
-import com.apps.codeit.getthere.services.FetchAddressIntentService;
+import com.apps.codeit.getthere.models.Place;
+import com.apps.codeit.getthere.services.AddressByNameIntentService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -40,12 +48,19 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.FirebaseApp;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.parceler.Parcels;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
@@ -54,22 +69,30 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMarkerClickListener{
 
-    protected String mLastLocation;
-    private AddressResultReceiver mResultReceiver;
+    private long LOCATION_REFRESH_TIME = 1000;
+    private float LOCATION_REFRESH_DISTANCE = 5;
 
     private AutoCompleteTextView mainmap_search;
 
     GoogleMap mGoogleMap;
     private GoogleApiClient googleApiClient;
-    private Geocoder geocoder;
 
-    List<Address> addresses;
+    public List<Address> addresses;
     ArrayAdapter<Address> adapter;
+    public List<Place> places;
+    public ArrayAdapter<Place> placeArrayAdapter;
+    private BroadcastReceiver outputAddressReceiver;
+    private AddressListResultReceiver addressResultReceiver;
+    private LocationManager locationManager;
+
+    FloatingActionButton mainmap_location;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_map);
+
+        FirebaseApp.getInstance();
 
         requestPermission();
 
@@ -84,10 +107,17 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                 .addApi(LocationServices.API)
                 .build();
 
-        geocoder = new Geocoder(this);
+        /*
+        if(addresses != null){
+            adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, addresses);
+        }
+        else {
+            adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+        }
+        */
+        places = new ArrayList<>();
+        placeArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, places);
 
-        addresses = new ArrayList<>();
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, addresses);
 
         mainmap_search = findViewById(R.id.mainmap_search);
         mainmap_search.setAdapter(adapter);
@@ -108,38 +138,208 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                 return false;
             }
         });
-        mainmap_search.addTextChangedListener(new TextWatcher() {
+        mainmap_search.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                mLastLocation = charSequence.toString().trim();
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-                if (editable.length() >= 3){
-                    startIntentService();
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    /*
+                    Intent intent = new Intent(MainMap.this, AddressByNameIntentService.class);
+                    intent.putExtra("address_receiver", Parcels.wrap(addressResultReceiver));
+                    intent.putExtra("address_name", mainmap_search.getText().toString().trim());
+                    startService(intent);
+                    */
+                    addressLookUp(mainmap_search.getText().toString().trim());
+                    return true;
                 }
-
+                return false;
             }
         });
 
-        //startIntentService();
+        getCurrentLocation();
+
+        if (!Geocoder.isPresent()) {
+            Toast.makeText(this,
+                    "Can't find address, ",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        mainmap_location = findViewById(R.id.mainmap_location);
+        mainmap_location.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        getCurrentLocation();
+                    }
+                });
+
+        addressResultReceiver = new AddressListResultReceiver(new Handler());
 
     }
 
-    protected void startIntentService() {
-        Intent intent = new Intent(this, FetchAddressIntentService.class);
-        //intent.putExtra(Constants.RECEIVER, mResultReceiver);
-        //intent.putExtra(Constants.LOCATION_DATA_EXTRA, mLastLocation);
-        intent.putExtra("location", mLastLocation);
-        startService(intent);
+    private void getCurrentLocation() {
+        //mGoogleMap.clear();
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+
+        Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+        if (location != null) {
+            //Getting longitude and latitude
+            //longitude = location.getLongitude();
+            //latitude = location.getLatitude();
+
+            //moving the map to location
+            moveMap(location.getLongitude(), location.getLatitude());
+        }
+
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME,
+                LOCATION_REFRESH_DISTANCE, new android.location.LocationListener() {
+                    @Override
+                    public void onLocationChanged(Location location) {
+                        moveMap(location.getLongitude(), location.getLatitude());
+                        locationMarker(location);
+                    }
+
+                    @Override
+                    public void onStatusChanged(String s, int i, Bundle bundle) {
+
+                    }
+
+                    @Override
+                    public void onProviderEnabled(String s) {
+
+                    }
+
+                    @Override
+                    public void onProviderDisabled(String s) {
+
+                    }
+                });
+
     }
 
+    private void moveMap(double longitude, double latitude) {
+        /**
+         * Creating the latlng object to store lat, long coordinates
+         * adding marker to map
+         * move the camera with animation
+         */
+        LatLng latLng = new LatLng(latitude, longitude);
+        /*
+        mGoogleMap.addMarker(new MarkerOptions()
+                .position(latLng)
+                .draggable(true)
+                .title("Marker in India"));
+        */
+
+        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(15), 2000, null);
+        mGoogleMap.getUiSettings().setZoomControlsEnabled(true);
+
+
+    }
+    private void locationMarker(Location location){
+        //creating marker to location
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        MarkerOptions markerOptions = new MarkerOptions();
+        //setting position for the marker
+        markerOptions.position(latLng);
+        // Setting the title for the marker.
+        // This will be displayed on taping the marker
+        markerOptions.title("My position");
+        markerOptions.draggable(false);
+        // Animating to the touched position
+        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+        mGoogleMap.addMarker(markerOptions);
+    }
+
+    public void addressLookUp(final String add) {
+        @SuppressLint("StaticFieldLeak") AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
+            @Override
+            protected Void doInBackground(String... strings) {
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder()
+                        //.url("https://maps.googleapis.com/maps/api/geocode/json?address="+add+"&key="+MainMap.this.getResources().getString(R.string.api_key))
+                        //.url("https://maps.googleapis.com/maps/api/geocode/json?address="+add+"&key="+R.string.api_key)
+                        .url("https://maps.googleapis.com/maps/api/geocode/json?address="+add)
+                        .build();
+                try {
+                    Response response = client.newCall(request).execute();
+                    JSONObject jsonObject = new JSONObject(response.body().string());
+                    for(int i=0;i<jsonObject.getJSONArray("results").length();i++){
+                        Place place = Place.fromJSON(jsonObject.getJSONArray("results").getJSONObject(i));
+                        places.add(place);
+                        placeArrayAdapter.notifyDataSetChanged();
+                    }
+                    //Place place = Place.fromJSON(jsonObject.getJSONObject( "results"));
+                    //places.add(place);
+                    //places.addAll(Place.fromJSONArray(jsonObject.getJSONArray("results")));
+                    //placeArrayAdapter.notifyDataSetChanged();
+                    Log.d("PLACES", places.toString());
+
+                }
+                catch (JSONException e){
+                    e.printStackTrace();
+                }
+                catch(IOException e){
+                    e.printStackTrace();
+                }
+
+                return null;
+            }
+        };
+        task.execute(add);
+    }
+
+    private class AddressListResultReceiver extends ResultReceiver {
+        AddressListResultReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+            if (resultCode == 0) {
+                Toast.makeText(MainMap.this,
+                        "Enter address name, " ,
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (resultCode == 1) {
+                Toast.makeText(MainMap.this,
+                        "Address not found, " ,
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            //String[] addressList = resultData.getStringArray("addressList");
+            addresses = Parcels.unwrap(resultData.getParcelable("addressList"));
+            Log.d("MAINMAPADDRESSES", addresses.toString());
+            adapter.notifyDataSetChanged();
+            //showResults(addressList);
+        }
+    }
+
+    private boolean isRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                Log.i("Service already","running");
+                return true;
+            }
+        }
+        return false;
+    }
 
     //Requesting permissions
     private void requestPermission(){
@@ -201,7 +401,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
     @Override
     public void onMapLongClick(LatLng latLng) {
-        //mGoogleMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
+        mGoogleMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
     }
 
     @Override
@@ -250,33 +450,6 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
     protected void onStop() {
         googleApiClient.disconnect();
         super.onStop();
-    }
-
-    class AddressResultReceiver extends ResultReceiver {
-        public AddressResultReceiver(Handler handler) {
-            super(handler);
-        }
-
-        @Override
-        protected void onReceiveResult(int resultCode, Bundle resultData) {
-
-            if (resultData == null) {
-                return;
-            }
-
-            // Display the address string
-            // or an error message sent from the intent service.
-            //mAddressOutput = resultData.getString(Constants.RESULT_DATA_KEY);
-            List<Address> result = Parcels.unwrap(resultData.getParcelable(Constants.RESULT_DATA_KEY));
-            addresses.addAll(result);
-            adapter.notifyDataSetChanged();
-
-            // Show a toast message if an address was found.
-            if (resultCode == Constants.SUCCESS_RESULT) {
-                //showToast(getString(R.string.address_found));
-            }
-
-        }
     }
 
 }

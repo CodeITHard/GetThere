@@ -81,14 +81,25 @@ public class Register extends Fragment implements View.OnClickListener{
     }
 
     // The create user method with email and password as parameters
-    private void registerUser(String email, String password) {
+    private void registerUser(final String email, final String password) {
         LoginRegister.firebaseAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()){
-                            startActivity(new Intent(getActivity(), MainMap.class));
-                            getActivity().finish();
+                            LoginRegister.firebaseAuth.signInWithEmailAndPassword(email, password)
+                                    .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<AuthResult> task) {
+                                            if (task.isSuccessful()){
+                                                startActivity(new Intent(getActivity(), MainMap.class));
+                                                getActivity().finish();
+                                            }
+                                            else {
+                                                //
+                                            }
+                                        }
+                                    });
                         }
                         else {
                             //

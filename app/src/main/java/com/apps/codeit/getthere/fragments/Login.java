@@ -8,6 +8,8 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -64,7 +66,9 @@ public class Login extends Fragment implements View.OnClickListener {
                             getActivity().finish();
                         }
                         else {
-                            //
+                            Animation shake = AnimationUtils.loadAnimation(getContext(), R.anim.shake);
+                            login_email_input.startAnimation(shake);
+                            login_password_input.startAnimation(shake);
                         }
                     }
                 });

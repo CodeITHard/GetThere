@@ -41,7 +41,8 @@
         android:drawableStart="@android:drawable/ic_menu_more"
         android:background="@drawable/edittext_bg"
         android:imeOptions="actionSearch"
-        android:focusable="true"
+        android:inputType="text"
+        android:singleLine="true"
         android:elevation="4dp"/>
 
     <android.support.design.widget.FloatingActionButton

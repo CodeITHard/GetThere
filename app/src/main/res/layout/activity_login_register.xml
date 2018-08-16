@@ -20,7 +20,7 @@
             android:id="@+id/login_register_toolbar"
             android:layout_width="match_parent"
             android:layout_height="250dp"
-            android:background="@color/colorPrimary"
+            android:background="@drawable/ic_bg"
             app:layout_scrollFlags="scroll|enterAlways"
             app:contentInsetStartWithNavigation="0dp"
             app:contentInsetStart="0dp">

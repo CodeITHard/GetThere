@@ -83,7 +83,7 @@ public class Place {
     }
     */
 
-    public String long_name;
+    public String long_name[];
     public String formatted_address;
     public double lat;
     public double lng;
@@ -93,9 +93,14 @@ public class Place {
 
     public static Place fromJSON(JSONObject jsonObject){
         Place place = new Place();
+        JSONArray jsonArray;
 
         try {
-            place.long_name = jsonObject.getJSONArray("address_components").getJSONObject(0).getString("long_name");
+            jsonArray = jsonObject.getJSONArray("address_components");
+            //place.long_name = jsonObject.getJSONArray("address_components").getJSONObject(0).getString("long_name");
+            for (int i=0;i<jsonArray.length();i++){
+                place.long_name[i] = jsonArray.getJSONObject(i).getString("long_name");
+            }
             place.formatted_address = jsonObject.getString("formatted_address");
             place.lat = jsonObject.getJSONObject("geometry").getJSONObject("location").getDouble("lat");
             place.lng = jsonObject.getJSONObject("geometry").getJSONObject("location").getDouble("lng");
