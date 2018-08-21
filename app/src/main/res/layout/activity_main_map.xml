@@ -35,15 +35,15 @@
         android:id="@+id/mainmap_search"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Search a location"
         android:layout_margin="8dp"
+        android:background="@drawable/edittext_bg"
         android:drawableEnd="@android:drawable/ic_menu_search"
         android:drawableStart="@android:drawable/ic_menu_more"
-        android:background="@drawable/edittext_bg"
+        android:elevation="4dp"
+        android:hint="Search a location"
         android:imeOptions="actionSearch"
         android:inputType="text"
-        android:singleLine="true"
-        android:elevation="4dp"/>
+        android:singleLine="true" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/mainmap_send"

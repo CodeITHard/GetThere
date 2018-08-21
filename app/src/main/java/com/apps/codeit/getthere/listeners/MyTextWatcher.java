@@ -26,9 +26,6 @@ public class MyTextWatcher implements TextWatcher {
     @Override
     public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
         switch (editText.getId()){
-            case R.id.register_user_name_input:
-                validateUsername(charSequence.toString().trim());
-                break;
             case R.id.register_password_input:
                 validatePassword(charSequence.toString().trim());
                 break;

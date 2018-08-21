@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -48,7 +49,17 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.FirebaseApp;
+import com.google.maps.DirectionsApi;
+import com.google.maps.DirectionsApiRequest;
+import com.google.maps.GeoApiContext;
+import com.google.maps.model.DirectionsLeg;
+import com.google.maps.model.DirectionsResult;
+import com.google.maps.model.DirectionsRoute;
+import com.google.maps.model.DirectionsStep;
+import com.google.maps.model.EncodedPolyline;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -56,6 +67,7 @@ import org.parceler.Parcels;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -71,6 +83,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
     private long LOCATION_REFRESH_TIME = 1000;
     private float LOCATION_REFRESH_DISTANCE = 5;
+    private final static String API_KEY = "AIzaSyBMmAZzi1ok9ZzDq3CDWChpoYYBFBQe7h8";
 
     private AutoCompleteTextView mainmap_search;
 
@@ -85,12 +98,18 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
     private AddressListResultReceiver addressResultReceiver;
     private LocationManager locationManager;
 
-    FloatingActionButton mainmap_location;
+    FloatingActionButton mainmap_location, mainmap_send;
+
+    List<Marker> markers;
+    List<Polyline> lines;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_map);
+
+        markers = new ArrayList<>();
+        lines = new ArrayList<>();
 
         FirebaseApp.getInstance();
 
@@ -172,6 +191,14 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                     }
                 });
 
+        mainmap_send = findViewById(R.id.mainmap_send);
+        mainmap_send.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //
+            }
+        });
+
         addressResultReceiver = new AddressListResultReceiver(new Handler());
 
     }
@@ -191,12 +218,9 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
         Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
         if (location != null) {
-            //Getting longitude and latitude
-            //longitude = location.getLongitude();
-            //latitude = location.getLatitude();
-
             //moving the map to location
             moveMap(location.getLongitude(), location.getLatitude());
+            locationMarker(location, "My Position");
         }
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -205,8 +229,8 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                 LOCATION_REFRESH_DISTANCE, new android.location.LocationListener() {
                     @Override
                     public void onLocationChanged(Location location) {
-                        moveMap(location.getLongitude(), location.getLatitude());
-                        locationMarker(location);
+                        //moveMap(location.getLongitude(), location.getLatitude());
+                        //locationMarker(location, "My Position");
                     }
 
                     @Override
@@ -228,18 +252,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
     }
 
     private void moveMap(double longitude, double latitude) {
-        /**
-         * Creating the latlng object to store lat, long coordinates
-         * adding marker to map
-         * move the camera with animation
-         */
         LatLng latLng = new LatLng(latitude, longitude);
-        /*
-        mGoogleMap.addMarker(new MarkerOptions()
-                .position(latLng)
-                .draggable(true)
-                .title("Marker in India"));
-        */
 
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(15), 2000, null);
@@ -247,19 +260,116 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
 
     }
-    private void locationMarker(Location location){
-        //creating marker to location
+    private void locationMarker(Location location, String title){
+        if (markers.size() > 0){
+            for(Marker marker : markers){
+                if (marker.getTitle().equals(title)){
+                    marker.remove();
+                    markers.remove(marker);
+                }
+            }
+        }
+
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        MarkerOptions markerOptions = new MarkerOptions();
-        //setting position for the marker
-        markerOptions.position(latLng);
-        // Setting the title for the marker.
-        // This will be displayed on taping the marker
-        markerOptions.title("My position");
-        markerOptions.draggable(false);
-        // Animating to the touched position
-        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-        mGoogleMap.addMarker(markerOptions);
+        Marker marker = mGoogleMap.addMarker(new MarkerOptions().position(latLng));
+        marker.setTitle(title);
+        marker.setDraggable(false);
+        markers.add(marker);
+        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(15), 2000, null);
+        mGoogleMap.getUiSettings().setZoomControlsEnabled(true);
+
+        if(markers.size() > 1){
+            Log.d("MARKERS", String.valueOf(markers.size()));
+            //drawRoute(getMarkerByTitle(markers, "My Position"), getMarkerByTitle(markers, "My Destination"));
+        }
+
+
+    }
+    private Marker getMarkerByTitle(List<Marker> markers, String title){
+        Marker marker = null;
+        for(Marker marker1 : markers){
+            if (marker1.getTitle().equals(title)){
+                marker = marker1;
+            }
+        }
+        return marker;
+    }
+    private void drawRoute(Marker pos, Marker dest){
+        List<LatLng> path = new ArrayList<>();
+        // Clear the polylines already drawn in the map
+        if (lines.size() > 0){
+            for (Polyline polyline : lines){
+                polyline.remove();
+                lines.remove(polyline);
+            }
+        }
+
+        // Execute direction API context
+        GeoApiContext context = new GeoApiContext.Builder()
+                .apiKey(API_KEY)
+                .build();
+        DirectionsApiRequest request = DirectionsApi.getDirections(context, String.valueOf(pos.getPosition().latitude)+","+String.valueOf(pos.getPosition().longitude), String.valueOf(dest.getPosition().latitude)+","+String.valueOf(dest.getPosition().longitude));
+
+        try{
+            DirectionsResult result = request.await();
+
+            // Loop through legs and steps to get encoded polylines of each step
+            if (result.routes != null && result.routes.length > 0){
+                DirectionsRoute route = result.routes[0];
+
+                if (route.legs !=null){
+                    for(int i=0; i<route.legs.length; i++){
+                        DirectionsLeg leg = route.legs[i];
+                        if (leg.steps != null){
+                            for (int j=0; j<leg.steps.length;j++){
+                                DirectionsStep step = leg.steps[j];
+                                if (step.steps != null && step.steps.length >0){
+                                    for (int k=0; k<step.steps.length;k++){
+                                        DirectionsStep step1 = step.steps[k];
+                                        EncodedPolyline points1 = step1.polyline;
+                                        if (points1 != null){
+                                            // Decode polyline and add points to list of route coordinates
+                                            List<com.google.maps.model.LatLng> coords1 = points1.decodePath();
+                                            for (com.google.maps.model.LatLng coord1 : coords1){
+                                                path.add(new LatLng(coord1.lat, coord1.lng));
+                                            }
+                                        }
+                                    }
+                                }
+                                else {
+                                    EncodedPolyline points = step.polyline;
+                                    if (points != null){
+                                        //Decode polyline and add points to list of route coordinates
+                                        List<com.google.maps.model.LatLng> coords = points.decodePath();
+                                        for (com.google.maps.model.LatLng coord : coords) {
+                                            path.add(new LatLng(coord.lat, coord.lng));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e){
+            e.getLocalizedMessage();
+            Log.d("EXCEPTION", e.getMessage());
+        }
+
+        //Draw the polyline
+        if (path.size() > 0) {
+            PolylineOptions opts = new PolylineOptions().addAll(path).color(Color.BLUE).width(5);
+            //Polyline polyline = mGoogleMap.addPolyline(opts);
+            //lines.add(polyline);
+            mGoogleMap.addPolyline(opts);
+        }
+
+        mGoogleMap.getUiSettings().setZoomControlsEnabled(true);
+
+        LatLng position = new LatLng(pos.getPosition().latitude, pos.getPosition().longitude);
+        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 15));
     }
 
     public void addressLookUp(final String add) {
@@ -287,10 +397,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                     Log.d("PLACES", places.toString());
 
                 }
-                catch (JSONException e){
-                    e.printStackTrace();
-                }
-                catch(IOException e){
+                catch (JSONException | IOException e){
                     e.printStackTrace();
                 }
 
@@ -401,23 +508,27 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
     @Override
     public void onMapLongClick(LatLng latLng) {
-        mGoogleMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
+        //mGoogleMap.addMarker(new MarkerOptions().position(latLng).draggable(true));
+        Location location = new Location(LocationManager.GPS_PROVIDER);
+        location.setLatitude(latLng.latitude);
+        location.setLongitude(latLng.longitude);
+        locationMarker(location, "My Destination");
     }
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        Toast.makeText(this, "onMarkerClick", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "onMarkerClick", Toast.LENGTH_SHORT).show();
         return true;
     }
 
     @Override
     public void onMarkerDragStart(Marker marker) {
-        Toast.makeText(this, "onMarkerDragStart", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "onMarkerDragStart", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onMarkerDrag(Marker marker) {
-        Toast.makeText(this, "onMarkerDrag", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "onMarkerDrag", Toast.LENGTH_SHORT).show();
     }
 
     @Override

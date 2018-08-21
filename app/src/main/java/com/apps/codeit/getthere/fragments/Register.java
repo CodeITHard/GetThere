@@ -22,8 +22,8 @@ import com.google.firebase.auth.AuthResult;
 
 public class Register extends Fragment implements View.OnClickListener{
 
-    private TextInputLayout register_user_name_input_layout, register_password_input_layout, register_email_input_layout;
-    private EditText register_user_name_input, register_password_input, register_email_input;
+    private TextInputLayout register_password_input_layout, register_email_input_layout;
+    private EditText register_password_input, register_email_input;
 
     private Button register_button_register;
 
@@ -42,16 +42,12 @@ public class Register extends Fragment implements View.OnClickListener{
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         //super.onViewCreated(view, savedInstanceState);
 
-        register_user_name_input_layout = view.findViewById(R.id.register_user_name_input_layout);
-        register_user_name_input = view.findViewById(R.id.register_user_name_input);
-
         register_password_input_layout = view.findViewById(R.id.register_password_input_layout);
         register_password_input = view.findViewById(R.id.register_password_input);
 
         register_email_input_layout = view.findViewById(R.id.register_email_input_layout);
         register_email_input = view.findViewById(R.id.register_email_input);
 
-        register_user_name_input.addTextChangedListener(new MyTextWatcher(register_user_name_input, register_user_name_input_layout));
         register_password_input.addTextChangedListener(new MyTextWatcher(register_password_input, register_password_input_layout));
 
         register_button_register = view.findViewById(R.id.register_button_register);

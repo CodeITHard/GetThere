@@ -45,23 +45,23 @@
             android:hint="Password"/>
     </android.support.design.widget.TextInputLayout>
 
-    <android.support.design.widget.TextInputLayout
-        android:elevation="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:id="@+id/register_user_name_input_layout"
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <EditText
-            android:id="@+id/register_user_name_input"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Register as"
+            android:textSize="16sp"/>
+
+        <Spinner
+            android:id="@+id/register_account_type"
             android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:inputType="text"
-            android:background="@drawable/edittext_bg"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:hint="Username"/>
-    </android.support.design.widget.TextInputLayout>
+            android:layout_height="wrap_content">
+
+        </Spinner>
+    </LinearLayout>
 
     <Button
         android:layout_marginTop="8dp"
@@ -69,7 +69,7 @@
         android:id="@+id/register_button_register"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Login"
+        android:text="Register"
         android:background="#00ffffff"/>
     <RelativeLayout
         android:layout_width="match_parent"
