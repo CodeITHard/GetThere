@@ -61,6 +61,7 @@ import com.google.maps.model.DirectionsRoute;
 import com.google.maps.model.DirectionsStep;
 import com.google.maps.model.EncodedPolyline;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.parceler.Parcels;
@@ -134,6 +135,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
             adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
         }
         */
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, addresses);
         places = new ArrayList<>();
         placeArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, places);
 
@@ -379,17 +381,20 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                 OkHttpClient client = new OkHttpClient();
                 Request request = new Request.Builder()
                         //.url("https://maps.googleapis.com/maps/api/geocode/json?address="+add+"&key="+MainMap.this.getResources().getString(R.string.api_key))
-                        //.url("https://maps.googleapis.com/maps/api/geocode/json?address="+add+"&key="+R.string.api_key)
+                        //.url("https://maps.googleapis.com/maps/api/geocode/json?address="+add+"&key="+API_KEY)
                         .url("https://maps.googleapis.com/maps/api/geocode/json?address="+add)
                         .build();
                 try {
                     Response response = client.newCall(request).execute();
                     JSONObject jsonObject = new JSONObject(response.body().string());
-                    for(int i=0;i<jsonObject.getJSONArray("results").length();i++){
-                        Place place = Place.fromJSON(jsonObject.getJSONArray("results").getJSONObject(i));
+                    JSONArray jsonArray = jsonObject.getJSONArray("results");
+
+                    for(int i=0;i<jsonArray.length();i++){
+                        Place place = Place.fromJSON(jsonArray.getJSONObject(i));
                         places.add(place);
                         placeArrayAdapter.notifyDataSetChanged();
                     }
+
                     //Place place = Place.fromJSON(jsonObject.getJSONObject( "results"));
                     //places.add(place);
                     //places.addAll(Place.fromJSONArray(jsonObject.getJSONArray("results")));
@@ -433,6 +438,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
             addresses = Parcels.unwrap(resultData.getParcelable("addressList"));
             Log.d("MAINMAPADDRESSES", addresses.toString());
             adapter.notifyDataSetChanged();
+
             //showResults(addressList);
         }
     }

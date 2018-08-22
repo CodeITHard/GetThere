@@ -50,6 +50,7 @@ public class AddressByNameIntentService extends IntentService {
 
         try {
             addresses = geocoder.getFromLocationName(addressName, 5);
+            Log.d("ADRESSES", addresses.toString());
         } catch (Exception ioException) {
             Log.e("", "Error in getting addresses for the given name");
         }
