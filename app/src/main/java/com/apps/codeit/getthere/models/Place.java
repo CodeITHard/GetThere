@@ -98,8 +98,9 @@ public class Place {
         try {
             jsonArray = jsonObject.getJSONArray("address_components");
             //place.long_name = jsonObject.getJSONArray("address_components").getJSONObject(0).getString("long_name");
+            place.long_name = new String[jsonArray.length()];
             for (int i=0;i<jsonArray.length();i++){
-                //place.long_name[i] = jsonArray.getJSONObject(i).getString("long_name");
+                place.long_name[i] = jsonArray.getJSONObject(i).getString("long_name");
             }
             place.formatted_address = jsonObject.getString("formatted_address");
             place.lat = jsonObject.getJSONObject("geometry").getJSONObject("location").getDouble("lat");

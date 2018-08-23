@@ -49,7 +49,7 @@ public class AddressByNameIntentService extends IntentService {
         List<Address> addresses = new ArrayList<>();
 
         try {
-            addresses = geocoder.getFromLocationName(addressName, 5);
+            addresses = geocoder.getFromLocationName(addressName, 10);
             Log.d("ADRESSES", addresses.toString());
         } catch (Exception ioException) {
             Log.e("", "Error in getting addresses for the given name");

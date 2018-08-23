@@ -31,20 +31,6 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"/>
 
-    <AutoCompleteTextView
-        android:id="@+id/mainmap_search"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:background="@drawable/edittext_bg"
-        android:drawableEnd="@android:drawable/ic_menu_search"
-        android:drawableStart="@android:drawable/ic_menu_more"
-        android:elevation="4dp"
-        android:hint="Search a location"
-        android:imeOptions="actionSearch"
-        android:inputType="text"
-        android:singleLine="true" />
-
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/mainmap_send"
         android:layout_width="wrap_content"
@@ -62,5 +48,19 @@
         android:layout_below="@id/mainmap_search"
         android:layout_margin="8dp"
         android:src="@drawable/ic_location"/>
+
+    <AutoCompleteTextView
+        android:id="@+id/mainmap_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+
+        android:drawableEnd="@android:drawable/ic_menu_search"
+        android:drawableStart="@android:drawable/ic_menu_more"
+        android:elevation="4dp"
+        android:hint="Search a location"
+        android:imeOptions="actionSearch"
+        android:inputType="text"
+        android:singleLine="true" />
 
 </RelativeLayout>

@@ -1,13 +1,13 @@
 package com.apps.codeit.getthere.activities;
 
 import android.Manifest;
+import android.animation.IntEvaluator;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -21,13 +21,15 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -36,6 +38,7 @@ import android.widget.Toast;
 
 import com.apps.codeit.getthere.R;
 import com.apps.codeit.getthere.constants.Constants;
+import com.apps.codeit.getthere.models.GeoPlace;
 import com.apps.codeit.getthere.models.Place;
 import com.apps.codeit.getthere.services.AddressByNameIntentService;
 import com.google.android.gms.common.ConnectionResult;
@@ -46,6 +49,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -67,6 +72,7 @@ import org.json.JSONObject;
 import org.parceler.Parcels;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -103,6 +109,11 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
     List<Marker> markers;
     List<Polyline> lines;
+    public List<GeoPlace> geoPlaces;
+    public ArrayAdapter<GeoPlace> geoPlaceArrayAdapter;
+    private LatLng myPos, myDest;
+    Circle circle;
+    private List<Circle> circles;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,6 +122,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
         markers = new ArrayList<>();
         lines = new ArrayList<>();
+        circles = new ArrayList<>();
 
         FirebaseApp.getInstance();
 
@@ -135,13 +147,19 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
             adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
         }
         */
+        addresses = new ArrayList<>();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, addresses);
         places = new ArrayList<>();
         placeArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, places);
+        geoPlaces = new ArrayList<>();
+        geoPlaceArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, geoPlaces);
 
 
         mainmap_search = findViewById(R.id.mainmap_search);
-        mainmap_search.setAdapter(adapter);
+        //mainmap_search.setAdapter(adapter);
+        //mainmap_search.setAdapter(placeArrayAdapter);
+        mainmap_search.setAdapter(geoPlaceArrayAdapter);
+        mainmap_search.setThreshold(1);
         mainmap_search.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -169,10 +187,27 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                     intent.putExtra("address_name", mainmap_search.getText().toString().trim());
                     startService(intent);
                     */
-                    addressLookUp(mainmap_search.getText().toString().trim());
+                    //addressLookUp(mainmap_search.getText().toString().trim());
+                    //geoPlacesLookUp(mainmap_search.getText().toString().trim());
                     return true;
                 }
                 return false;
+            }
+        });
+        mainmap_search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                geoPlacesLookUp(charSequence.toString().trim());
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
             }
         });
 
@@ -197,12 +232,85 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         mainmap_send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //
+                drawCircle(myPos, myDest);
             }
         });
 
         addressResultReceiver = new AddressListResultReceiver(new Handler());
 
+    }
+
+    private void drawCircle(final LatLng pos, final LatLng dest) {
+        if(circles.size() > 0){
+            for(Circle circle : circles){
+                circle.remove();
+                circles.remove(circle);
+            }
+        }
+        // Instantiating CircleOptions to draw a circle around the marker
+        CircleOptions circleOptions = new CircleOptions();
+
+        // Specifying the center of the circle
+        circleOptions.center(pos);
+
+        // Radius of the circle
+        circleOptions.radius((CalculationByDistance(pos, dest) * 1000) / 2);
+
+        // Border color of the circle
+        circleOptions.strokeColor(0x3040C4FF);
+
+        // Fill color of the circle
+        circleOptions.fillColor(0x30ff0000);
+
+        // Border width of the circle
+        circleOptions.strokeWidth(4);
+
+        // Adding the circle to the GoogleMap
+        //mGoogleMap.addCircle(circleOptions);
+        circle = mGoogleMap.addCircle(circleOptions);
+        circles.add(circle);
+
+        ValueAnimator valueAnimator = new ValueAnimator();
+        valueAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        valueAnimator.setRepeatMode(ValueAnimator.RESTART);
+        valueAnimator.setIntValues(0, (int)((CalculationByDistance(pos, dest) * 1000) / 2));
+        valueAnimator.setDuration(3000);
+        valueAnimator.setEvaluator(new IntEvaluator());
+        valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                float animatedFraction = valueAnimator.getAnimatedFraction();
+                //circle.setDimensions(animatedFraction * radius * 2);
+                circle.setRadius(animatedFraction * (int)((CalculationByDistance(pos, dest) * 1000) / 2));
+            }
+        });
+
+        valueAnimator.start();
+    }
+    public double CalculationByDistance(LatLng StartP, LatLng EndP) {
+        int Radius = 6371;// radius of earth in Km
+        double lat1 = StartP.latitude;
+        double lat2 = EndP.latitude;
+        double lon1 = StartP.longitude;
+        double lon2 = EndP.longitude;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1))
+                * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2)
+                * Math.sin(dLon / 2);
+        double c = 2 * Math.asin(Math.sqrt(a));
+        double valueResult = Radius * c;
+        double km = valueResult / 1;
+        DecimalFormat newFormat = new DecimalFormat("####");
+        int kmInDec = Integer.valueOf(newFormat.format(km));
+        double meter = valueResult % 1000;
+        int meterInDec = Integer.valueOf(newFormat.format(meter));
+        Log.i("Radius Value", "" + valueResult + "   KM  " + kmInDec
+                + " Meter   " + meterInDec);
+
+        return Radius * c;
     }
 
     private void getCurrentLocation() {
@@ -220,6 +328,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
         Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
         if (location != null) {
+            myPos = new LatLng(location.getLatitude(), location.getLongitude());
             //moving the map to location
             moveMap(location.getLongitude(), location.getLatitude());
             locationMarker(location, "My Position");
@@ -374,7 +483,38 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 15));
     }
 
+    private void geoPlacesLookUp(final String geoPlace){
+
+        @SuppressLint("StaticFieldLeak") AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
+            @Override
+            protected Void doInBackground(String... strings) {
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder()
+                        .url("http://api.geonames.org/searchJSON?q="+geoPlace+"&username=bloworlf&style=full")
+                        .build();
+                try {
+                    Response response = client.newCall(request).execute();
+                    JSONArray jsonArray = new JSONObject(response.body().string()).getJSONArray("geonames");
+
+                    geoPlaces.addAll(GeoPlace.fromJSONArray(jsonArray));
+                    geoPlaceArrayAdapter.notifyDataSetChanged();
+                }
+                catch (JSONException | IOException e){
+                    e.printStackTrace();
+                }
+
+                return null;
+            }
+        };
+        task.execute(geoPlace);
+    }
+
     public void addressLookUp(final String add) {
+        if (places.size() > 0){
+            places.clear();
+            placeArrayAdapter.notifyDataSetChanged();
+        }
+
         @SuppressLint("StaticFieldLeak") AsyncTask<String, Void, Void> task = new AsyncTask<String, Void, Void>() {
             @Override
             protected Void doInBackground(String... strings) {
@@ -386,8 +526,8 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                         .build();
                 try {
                     Response response = client.newCall(request).execute();
-                    JSONObject jsonObject = new JSONObject(response.body().string());
-                    JSONArray jsonArray = jsonObject.getJSONArray("results");
+                    JSONArray jsonArray = new JSONObject(response.body().string()).getJSONArray("results");
+                    //JSONArray jsonArray = jsonObject.getJSONArray("results");
 
                     for(int i=0;i<jsonArray.length();i++){
                         Place place = Place.fromJSON(jsonArray.getJSONObject(i));
@@ -507,6 +647,10 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
+        if(myPos != null){
+            moveMap(myPos.latitude, myPos.longitude);
+        }
+
 
         mGoogleMap.setOnMarkerDragListener(this);
         mGoogleMap.setOnMapLongClickListener(this);
@@ -519,6 +663,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         location.setLatitude(latLng.latitude);
         location.setLongitude(latLng.longitude);
         locationMarker(location, "My Destination");
+        myDest = latLng;
     }
 
     @Override
