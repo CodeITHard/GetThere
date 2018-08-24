@@ -3,4 +3,9 @@
     <string name="facebook_app_id">260150627936594</string>
     <string name="fb_login_protocol_scheme">fb260150627936594</string>
     <string name="api_key">AIzaSyBMmAZzi1ok9ZzDq3CDWChpoYYBFBQe7h8</string>
+    <array name="account_type">
+        <item></item>
+        <item>Client</item>
+        <item>Chauffeur</item>
+    </array>
 </resources>

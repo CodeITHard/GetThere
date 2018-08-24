@@ -29,7 +29,8 @@
                 android:background="@drawable/edittext_bg"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
-                android:hint="Email"/>
+                android:hint="Email"
+                android:imeOptions="actionNext"/>
         </android.support.design.widget.TextInputLayout>
 
         <android.support.design.widget.TextInputLayout
@@ -47,7 +48,8 @@
                 android:background="@drawable/edittext_bg"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
-                android:hint="Password"/>
+                android:hint="Password"
+                android:imeOptions="actionNext"/>
         </android.support.design.widget.TextInputLayout>
 
         <LinearLayout

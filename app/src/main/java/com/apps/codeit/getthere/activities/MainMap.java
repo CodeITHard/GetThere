@@ -8,6 +8,7 @@ import android.app.ActivityManager;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -17,6 +18,7 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.ResultReceiver;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -56,6 +58,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.RemoteMessage;
 import com.google.maps.DirectionsApi;
@@ -66,6 +70,7 @@ import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
 import com.google.maps.model.DirectionsStep;
 import com.google.maps.model.EncodedPolyline;
+import com.onesignal.OneSignal;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -73,9 +78,13 @@ import org.json.JSONObject;
 import org.parceler.Parcels;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.OkHttpClient;
@@ -120,6 +129,9 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
     private ArrayList<Location> locations;
     private List<ValueAnimator> animators;
     private ValueAnimator valueAnimator;
+    FirebaseUser user;
+    private int account_type;
+    SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,8 +143,18 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         circles = new ArrayList<>();
         locations = new ArrayList<>();
         animators = new ArrayList<>();
+        sharedPreferences = this.getSharedPreferences("account_type", Context.MODE_PRIVATE);
+        account_type = sharedPreferences.getInt("type", 0);
 
         FirebaseApp.getInstance();
+        user = FirebaseAuth.getInstance().getCurrentUser();
+        // OneSignal Initialization
+        OneSignal.startInit(this)
+                .inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
+                .unsubscribeWhenNotificationsAreDisabled(true)
+                .init();
+        OneSignal.sendTag("Client", String.valueOf(account_type));
+
 
         requestPermission();
 
@@ -250,7 +272,8 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
             @Override
             public void onClick(View view) {
                 drawCircle(myPos, myDest, "mot");
-                sendMessage();
+                //sendMessage();
+                sendNotification();
                 mainmap_fab_menu.toggle(true);
             }
         });
@@ -266,6 +289,80 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         addressResultReceiver = new AddressListResultReceiver(new Handler());
 
     }
+    private void sendNotification(){
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                int SDK_INT = android.os.Build.VERSION.SDK_INT;
+                if (SDK_INT > 8) {
+                    StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                            .permitAll().build();
+                    StrictMode.setThreadPolicy(policy);
+                    String tag = "2";
+
+                    //This is a Simple Logic to Send Notification different Device Programmatically....
+                    /*
+                    if (MainActivity.LoggedIn_User_Email.equals("user1@gmail.com")) {
+                        send_email = "user2@gmail.com";
+                    } else {
+                        send_email = "user1@gmail.com";
+                    }
+                    */
+
+                    try {
+                        String jsonResponse;
+
+                        URL url = new URL("https://onesignal.com/api/v1/notifications");
+                        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                        con.setUseCaches(false);
+                        con.setDoOutput(true);
+                        con.setDoInput(true);
+
+                        con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                        con.setRequestProperty("Authorization", "Basic ZjVhMDFjMTctNzVmMy00ZTc4LTg5YzctMzZhMjVjMjFhNzcx");
+                        con.setRequestMethod("POST");
+
+                        String strJsonBody = "{"
+                                + "\"app_id\": \"5a3f898b-bb06-431c-91a9-70d23d3368c6\","
+
+                                + "\"filters\": [{\"field\": \"tag\", \"key\": \"Client\", \"relation\": \"=\", \"value\": \"" + tag + "\"}],"
+
+                                + "\"data\": {\"foo\": \"bar\"},"
+                                + "\"contents\": {\"en\": \"Someone has requested a ride\"}"
+                                + "}";
+
+
+                        System.out.println("strJsonBody:\n" + strJsonBody);
+
+                        byte[] sendBytes = strJsonBody.getBytes("UTF-8");
+                        con.setFixedLengthStreamingMode(sendBytes.length);
+
+                        OutputStream outputStream = con.getOutputStream();
+                        outputStream.write(sendBytes);
+
+                        int httpResponse = con.getResponseCode();
+                        System.out.println("httpResponse: " + httpResponse);
+
+                        if (httpResponse >= HttpURLConnection.HTTP_OK
+                                && httpResponse < HttpURLConnection.HTTP_BAD_REQUEST) {
+                            Scanner scanner = new Scanner(con.getInputStream(), "UTF-8");
+                            jsonResponse = scanner.useDelimiter("\\A").hasNext() ? scanner.next() : "";
+                            scanner.close();
+                        } else {
+                            Scanner scanner = new Scanner(con.getErrorStream(), "UTF-8");
+                            jsonResponse = scanner.useDelimiter("\\A").hasNext() ? scanner.next() : "";
+                            scanner.close();
+                        }
+                        System.out.println("jsonResponse:\n" + jsonResponse);
+
+                    } catch (Throwable t) {
+                        t.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
+
 
     public void sendMessage(){
         FirebaseMessaging fm = FirebaseMessaging.getInstance();
@@ -274,8 +371,6 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                 .setMessageId(Integer.toString(msgId.incrementAndGet()))
                 .addData("my_message", "Hello World")
                 .addData("my_action","SAY_HELLO")
-                .setTtl(1000)
-                .setMessageType("ack")
                 .build());
         Log.d("SENDING MESSAGE", "Sending your message");
 
