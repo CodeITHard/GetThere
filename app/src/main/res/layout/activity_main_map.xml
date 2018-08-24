@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
     tools:context=".activities.MainMap">
 
     <!--
@@ -16,13 +16,6 @@
     </android.support.design.widget.AppBarLayout>
     -->
 
-    <!--
-        <com.google.android.gms.maps.MapView
-        android:id="@+id/mapView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-        -->
-
     <fragment
         android:id="@+id/mapfragment"
         android:name="com.google.android.gms.maps.MapFragment"
@@ -31,23 +24,15 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"/>
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/mainmap_send"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="8dp"
-        android:src="@drawable/ic_send"/>
-
-    <android.support.design.widget.FloatingActionButton
+    <com.github.clans.fab.FloatingActionButton
         android:id="@+id/mainmap_location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_below="@id/mainmap_search"
-        android:layout_margin="8dp"
-        android:src="@drawable/ic_location"/>
+        android:src="@drawable/ic_location"
+        android:scaleType="centerInside"
+        fab:fab_colorNormal="@color/colorAccent"/>
 
     <AutoCompleteTextView
         android:id="@+id/mainmap_search"
@@ -62,5 +47,35 @@
         android:imeOptions="actionSearch"
         android:inputType="text"
         android:singleLine="true" />
+
+    <com.github.clans.fab.FloatingActionMenu
+        android:id="@+id/mainmap_fab_menu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        fab:menu_icon="@android:drawable/ic_menu_send"
+        fab:menu_fab_size="normal"
+        fab:menu_colorNormal="@color/colorAccent">
+
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/mainmap_fab_motorcycle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_motorcycle_service"
+            android:background="@android:color/transparent"
+            fab:fab_size="mini"
+            fab:fab_label="Motorcycle"
+            fab:fab_colorNormal="@color/colorAccent"/>
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/mainmap_fab_car"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_car_service"
+            android:background="@android:color/transparent"
+            fab:fab_size="mini"
+            fab:fab_label="Car"
+            fab:fab_colorNormal="@color/colorAccent"/>
+    </com.github.clans.fab.FloatingActionMenu>
 
 </RelativeLayout>

@@ -19,7 +19,6 @@ import android.os.Handler;
 import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -37,10 +36,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.apps.codeit.getthere.R;
-import com.apps.codeit.getthere.constants.Constants;
 import com.apps.codeit.getthere.models.GeoPlace;
 import com.apps.codeit.getthere.models.Place;
-import com.apps.codeit.getthere.services.AddressByNameIntentService;
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -74,7 +73,6 @@ import org.parceler.Parcels;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -105,7 +103,8 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
     private AddressListResultReceiver addressResultReceiver;
     private LocationManager locationManager;
 
-    FloatingActionButton mainmap_location, mainmap_send;
+    FloatingActionMenu mainmap_fab_menu;
+    FloatingActionButton mainmap_location, mainmap_fab_motorcycle, mainmap_fab_car;
 
     List<Marker> markers;
     List<Polyline> lines;
@@ -114,6 +113,9 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
     private LatLng myPos, myDest;
     Circle circle;
     private List<Circle> circles;
+    private ArrayList<Location> locations;
+    private List<ValueAnimator> animators;
+    private ValueAnimator valueAnimator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +125,8 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         markers = new ArrayList<>();
         lines = new ArrayList<>();
         circles = new ArrayList<>();
+        locations = new ArrayList<>();
+        animators = new ArrayList<>();
 
         FirebaseApp.getInstance();
 
@@ -139,14 +143,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                 .addApi(LocationServices.API)
                 .build();
 
-        /*
-        if(addresses != null){
-            adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, addresses);
-        }
-        else {
-            adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
-        }
-        */
+
         addresses = new ArrayList<>();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, addresses);
         places = new ArrayList<>();
@@ -188,7 +185,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                     startService(intent);
                     */
                     //addressLookUp(mainmap_search.getText().toString().trim());
-                    //geoPlacesLookUp(mainmap_search.getText().toString().trim());
+                    geoPlacesLookUp(mainmap_search.getText().toString().trim());
                     return true;
                 }
                 return false;
@@ -202,7 +199,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                geoPlacesLookUp(charSequence.toString().trim());
+                //geoPlacesLookUp(charSequence.toString().trim());
             }
 
             @Override
@@ -228,11 +225,36 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                     }
                 });
 
-        mainmap_send = findViewById(R.id.mainmap_send);
-        mainmap_send.setOnClickListener(new View.OnClickListener() {
+        mainmap_fab_menu = findViewById(R.id.mainmap_fab_menu);
+        mainmap_fab_menu.setOnMenuButtonLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                if(valueAnimator != null){
+                    if (valueAnimator.isRunning()){
+                        valueAnimator.end();
+                        for (Circle c : circles){
+                            c.remove();
+                            circles.remove(c);
+                        }
+                    }
+                }
+                return true;
+            }
+        });
+        mainmap_fab_motorcycle = findViewById(R.id.mainmap_fab_motorcycle);
+        mainmap_fab_motorcycle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                drawCircle(myPos, myDest);
+                drawCircle(myPos, myDest, "mot");
+                mainmap_fab_menu.toggle(true);
+            }
+        });
+        mainmap_fab_car = findViewById(R.id.mainmap_fab_car);
+        mainmap_fab_car.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                drawCircle(myPos, myDest, "car");
+                mainmap_fab_menu.toggle(true);
             }
         });
 
@@ -240,77 +262,96 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
     }
 
-    private void drawCircle(final LatLng pos, final LatLng dest) {
-        if(circles.size() > 0){
-            for(Circle circle : circles){
-                circle.remove();
-                circles.remove(circle);
+    private void drawCircle(final LatLng pos, final LatLng dest, String tag) {
+        if (pos != null && dest != null){
+            if(circles.size() > 0){
+                for(Circle circle : circles){
+                    circle.remove();
+                    circles.remove(circle);
+                }
             }
+            if(animators.size() > 0){
+                for (ValueAnimator v : animators){
+                    v.end();
+                    animators.remove(v);
+                }
+            }
+            // Instantiating CircleOptions to draw a circle around the marker
+            CircleOptions circleOptions = new CircleOptions();
+
+            // Specifying the center of the circle
+            circleOptions.center(pos);
+
+            // Radius of the circle
+            circleOptions.radius((CalculationByDistance(pos, dest) * 1000) / 2);
+
+            // Border color of the circle
+            circleOptions.strokeColor(0x3040C4FF);
+
+            // Fill color of the circle
+            if(tag.equals("mot")){
+                circleOptions.fillColor(0x30ff0000);
+            }
+            else {
+                circleOptions.fillColor(0x3000ff00);
+            }
+
+
+            // Border width of the circle
+            circleOptions.strokeWidth(4);
+
+            // Adding the circle to the GoogleMap
+            //mGoogleMap.addCircle(circleOptions);
+            circle = mGoogleMap.addCircle(circleOptions);
+            circles.add(circle);
+
+            valueAnimator = new ValueAnimator();
+            valueAnimator.setRepeatCount(ValueAnimator.INFINITE);
+            //valueAnimator.setRepeatMode(ValueAnimator.RESTART);
+            valueAnimator.setRepeatMode(ValueAnimator.REVERSE);
+            valueAnimator.setIntValues(0, (int)((CalculationByDistance(pos, dest) * 1000) / 2));
+            valueAnimator.setDuration(3000);
+            valueAnimator.setEvaluator(new IntEvaluator());
+            valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    float animatedFraction = valueAnimator.getAnimatedFraction();
+                    //circle.setDimensions(animatedFraction * radius * 2);
+                    circle.setRadius(animatedFraction * (int)((CalculationByDistance(pos, dest) * 1000) / 2));
+                }
+            });
+
+            animators.add(valueAnimator);
+            valueAnimator.start();
         }
-        // Instantiating CircleOptions to draw a circle around the marker
-        CircleOptions circleOptions = new CircleOptions();
-
-        // Specifying the center of the circle
-        circleOptions.center(pos);
-
-        // Radius of the circle
-        circleOptions.radius((CalculationByDistance(pos, dest) * 1000) / 2);
-
-        // Border color of the circle
-        circleOptions.strokeColor(0x3040C4FF);
-
-        // Fill color of the circle
-        circleOptions.fillColor(0x30ff0000);
-
-        // Border width of the circle
-        circleOptions.strokeWidth(4);
-
-        // Adding the circle to the GoogleMap
-        //mGoogleMap.addCircle(circleOptions);
-        circle = mGoogleMap.addCircle(circleOptions);
-        circles.add(circle);
-
-        ValueAnimator valueAnimator = new ValueAnimator();
-        valueAnimator.setRepeatCount(ValueAnimator.INFINITE);
-        valueAnimator.setRepeatMode(ValueAnimator.RESTART);
-        valueAnimator.setIntValues(0, (int)((CalculationByDistance(pos, dest) * 1000) / 2));
-        valueAnimator.setDuration(3000);
-        valueAnimator.setEvaluator(new IntEvaluator());
-        valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                float animatedFraction = valueAnimator.getAnimatedFraction();
-                //circle.setDimensions(animatedFraction * radius * 2);
-                circle.setRadius(animatedFraction * (int)((CalculationByDistance(pos, dest) * 1000) / 2));
-            }
-        });
-
-        valueAnimator.start();
     }
     public double CalculationByDistance(LatLng StartP, LatLng EndP) {
-        int Radius = 6371;// radius of earth in Km
-        double lat1 = StartP.latitude;
-        double lat2 = EndP.latitude;
-        double lon1 = StartP.longitude;
-        double lon2 = EndP.longitude;
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(lat1))
-                * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2)
-                * Math.sin(dLon / 2);
-        double c = 2 * Math.asin(Math.sqrt(a));
-        double valueResult = Radius * c;
-        double km = valueResult / 1;
-        DecimalFormat newFormat = new DecimalFormat("####");
-        int kmInDec = Integer.valueOf(newFormat.format(km));
-        double meter = valueResult % 1000;
-        int meterInDec = Integer.valueOf(newFormat.format(meter));
-        Log.i("Radius Value", "" + valueResult + "   KM  " + kmInDec
-                + " Meter   " + meterInDec);
+        if(StartP != null && EndP != null){
+            int Radius = 6371;// radius of earth in Km
+            double lat1 = StartP.latitude;
+            double lat2 = EndP.latitude;
+            double lon1 = StartP.longitude;
+            double lon2 = EndP.longitude;
+            double dLat = Math.toRadians(lat2 - lat1);
+            double dLon = Math.toRadians(lon2 - lon1);
+            double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                    + Math.cos(Math.toRadians(lat1))
+                    * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2)
+                    * Math.sin(dLon / 2);
+            double c = 2 * Math.asin(Math.sqrt(a));
+            double valueResult = Radius * c;
+            double km = valueResult / 1;
+            DecimalFormat newFormat = new DecimalFormat("####");
+            int kmInDec = Integer.valueOf(newFormat.format(km));
+            double meter = valueResult % 1000;
+            int meterInDec = Integer.valueOf(newFormat.format(meter));
+            Log.i("Radius Value", "" + valueResult + "   KM  " + kmInDec
+                    + " Meter   " + meterInDec);
 
-        return Radius * c;
+            return Radius * c;
+        }
+        return 0;
     }
 
     private void getCurrentLocation() {
@@ -372,11 +413,22 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
 
     }
     private void locationMarker(Location location, String title){
+        locations.add(location);
+        /*
         if (markers.size() > 0){
             for(Marker marker : markers){
                 if (marker.getTitle().equals(title)){
                     marker.remove();
                     markers.remove(marker);
+                }
+            }
+        }
+        */
+        if(markers.size() > 0){
+            for (int i=0;i<markers.size();i++){
+                if (markers.get(i).getTitle().equals(title)){
+                    markers.get(i).remove();
+                    markers.remove(i);
                 }
             }
         }
@@ -393,15 +445,53 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         if(markers.size() > 1){
             Log.d("MARKERS", String.valueOf(markers.size()));
             //drawRoute(getMarkerByTitle(markers, "My Position"), getMarkerByTitle(markers, "My Destination"));
+            if(locations.size() > 1){
+                //drawPrimaryLinePath(locations);
+            }
+
         }
 
 
     }
+    private void drawPrimaryLinePath( ArrayList<Location> listLocsToDraw )
+    {
+        if ( mGoogleMap == null )
+        {
+            return;
+        }
+
+        if ( listLocsToDraw.size() < 2 )
+        {
+            return;
+        }
+
+        PolylineOptions options = new PolylineOptions();
+
+        options.color( Color.parseColor( "#CC0000FF" ) );
+        options.width( 5 );
+        options.visible( true );
+
+        for ( Location locRecorded : listLocsToDraw )
+        {
+            options.add( new LatLng( locRecorded.getLatitude(),
+                    locRecorded.getLongitude() ) );
+        }
+
+        mGoogleMap.addPolyline( options );
+
+    }
     private Marker getMarkerByTitle(List<Marker> markers, String title){
         Marker marker = null;
+        /*
         for(Marker marker1 : markers){
             if (marker1.getTitle().equals(title)){
                 marker = marker1;
+            }
+        }
+        */
+        for (int i=0;i<markers.size();i++){
+            if (markers.get(i).getTitle().equals(title)){
+                marker = markers.get(i);
             }
         }
         return marker;

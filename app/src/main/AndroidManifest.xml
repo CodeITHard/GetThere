@@ -23,15 +23,15 @@
         <activity android:name=".activities.LoginRegister">
 
             <!-- |||||||| -->
-        </activity>
-        <activity android:name=".activities.MainMap">
-
-            <!-- |||||||| -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".activities.MainMap">
+
+            <!-- |||||||| -->
         </activity>
 
         <meta-data
@@ -62,6 +62,19 @@
         <service
             android:name=".services.AddressByNameIntentService"
             android:exported="false" />
+
+        <service
+            android:name=".services.MyFirebaseMessagingService">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
+        <service
+            android:name=".services.MyFirebaseInstanceIdService">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+            </intent-filter>
+        </service>
 
         <activity android:name=".activities.AboutUsActivity"></activity>
     </application>

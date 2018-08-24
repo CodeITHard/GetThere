@@ -5,7 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.LoginRegister">
+    tools:context=".activities.LoginRegister"
+    android:background="@color/background">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/login_register_appBarLayout"
@@ -19,7 +20,7 @@
         <android.support.v7.widget.Toolbar
             android:id="@+id/login_register_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="250dp"
+            android:layout_height="?attr/actionBarSize"
             android:background="@drawable/ic_bg"
             app:layout_scrollFlags="scroll|enterAlways"
             app:contentInsetStartWithNavigation="0dp"
