@@ -48,4 +48,19 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         notificationManager.notify(0, builder.build());
 
     }
+
+    @Override
+    public void onMessageSent(String s) {
+        //
+    }
+
+    @Override
+    public void onSendError(String s, Exception e) {
+        //
+    }
+
+    @Override
+    public void onDeletedMessages() {
+        //
+    }
 }

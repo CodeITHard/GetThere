@@ -2,8 +2,8 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@color/background">
+    android:layout_height="match_parent"
+    android:background="@drawable/ic_login_bg">
 
     <LinearLayout
         android:layout_centerInParent="true"
@@ -50,13 +50,22 @@
         </android.support.design.widget.TextInputLayout>
 
         <Button
+            android:layout_gravity="center"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             android:id="@+id/login_button_login"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Login"
-            android:background="#00ffffff"/>
+            android:background="#50ffffff"/>
+
+        <TextView
+            android:id="@+id/login_edittext_signup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sign up"
+            android:textSize="16sp"
+            android:layout_gravity="center"/>
     </LinearLayout>
 
 </RelativeLayout>

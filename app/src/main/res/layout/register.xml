@@ -1,85 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="8dp"
-    android:showDividers="middle"
-    android:divider="@drawable/divider"
-    android:background="@color/background">
-
-    <android.support.design.widget.TextInputLayout
-        android:elevation="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:id="@+id/register_email_input_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <EditText
-            android:id="@+id/register_email_input"
-            android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:inputType="textEmailAddress"
-            android:background="@drawable/edittext_bg"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:hint="Email"/>
-    </android.support.design.widget.TextInputLayout>
-
-    <android.support.design.widget.TextInputLayout
-        android:elevation="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:id="@+id/register_password_input_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <EditText
-            android:id="@+id/register_password_input"
-            android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:inputType="textPassword"
-            android:background="@drawable/edittext_bg"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:hint="Password"/>
-    </android.support.design.widget.TextInputLayout>
+    android:layout_height="match_parent"
+    android:background="@drawable/ic_login_bg">
 
     <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Register as"
-            android:textSize="16sp"/>
-
-        <Spinner
-            android:id="@+id/register_account_type"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-        </Spinner>
-    </LinearLayout>
-
-    <Button
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:id="@+id/register_button_register"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Register"
-        android:background="#00ffffff"/>
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:layout_centerInParent="true"
-            android:layout_width="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:showDividers="middle"
+        android:divider="@drawable/divider"
+        android:layout_centerInParent="true">
+
+        <android.support.design.widget.TextInputLayout
+            android:elevation="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:id="@+id/register_email_input_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <EditText
+                android:id="@+id/register_email_input"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:inputType="textEmailAddress"
+                android:background="@drawable/edittext_bg"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:hint="Email"/>
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:elevation="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:id="@+id/register_password_input_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <EditText
+                android:id="@+id/register_password_input"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:inputType="textPassword"
+                android:background="@drawable/edittext_bg"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:hint="Password"/>
+        </android.support.design.widget.TextInputLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Register as"
+                android:textSize="16sp"/>
+
+            <Spinner
+                android:id="@+id/register_account_type"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:spinnerMode="dropdown"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Chauffeur"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Client"/>
+
+            </Spinner>
+        </LinearLayout>
+
+        <Button
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:id="@+id/register_button_register"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="------OR------"/>
+            android:text="Register"
+            android:background="#00ffffff"/>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_centerInParent="true"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="------OR------"/>
 
-    </RelativeLayout>
+        </RelativeLayout>
 
-</LinearLayout>
+    </LinearLayout>
+
+</RelativeLayout>

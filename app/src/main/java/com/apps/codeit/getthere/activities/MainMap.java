@@ -56,6 +56,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.RemoteMessage;
 import com.google.maps.DirectionsApi;
 import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
@@ -74,6 +76,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -89,6 +92,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
     private long LOCATION_REFRESH_TIME = 1000;
     private float LOCATION_REFRESH_DISTANCE = 5;
     private final static String API_KEY = "AIzaSyBMmAZzi1ok9ZzDq3CDWChpoYYBFBQe7h8";
+    private final static String SENDER_ID = "351316139107";
 
     private AutoCompleteTextView mainmap_search;
 
@@ -246,6 +250,7 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
             @Override
             public void onClick(View view) {
                 drawCircle(myPos, myDest, "mot");
+                sendMessage();
                 mainmap_fab_menu.toggle(true);
             }
         });
@@ -259,6 +264,18 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
         });
 
         addressResultReceiver = new AddressListResultReceiver(new Handler());
+
+    }
+
+    public void sendMessage(){
+        FirebaseMessaging fm = FirebaseMessaging.getInstance();
+        AtomicInteger msgId = new AtomicInteger();
+        fm.send(new RemoteMessage.Builder(SENDER_ID + "@gcm.googleapis.com")
+                .setMessageId(Integer.toString(msgId.incrementAndGet()))
+                .addData("my_message", "Hello World")
+                .addData("my_action","SAY_HELLO")
+                .setTtl(1000)
+                .build());
 
     }
 
