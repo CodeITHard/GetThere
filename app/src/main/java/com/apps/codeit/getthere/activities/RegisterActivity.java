@@ -6,9 +6,12 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.apps.codeit.getthere.R;
@@ -44,6 +47,18 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         register_email_input = findViewById(R.id.register_email_input);
 
         register_password_input.addTextChangedListener(new MyTextWatcher(register_password_input, register_password_input_layout));
+        register_password_input.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    registerUser(register_email_input.getText().toString().trim(), register_password_input.getText().toString().trim());
+                    register_email_input.setText("");
+                    register_password_input.setText("");
+                    return true;
+                }
+                return false;
+            }
+        });
 
         register_button_register = findViewById(R.id.register_button_register);
         register_button_register.setOnClickListener(this);
@@ -72,7 +87,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if(task.isSuccessful()){
-                                LoginRegister.firebaseAuth.signInWithEmailAndPassword(email, password)
+                                firebaseAuth.signInWithEmailAndPassword(email, password)
                                         .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                                             @Override
                                             public void onComplete(@NonNull Task<AuthResult> task) {
