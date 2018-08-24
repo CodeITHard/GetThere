@@ -275,7 +275,9 @@ public class MainMap extends AppCompatActivity implements OnMapReadyCallback,
                 .addData("my_message", "Hello World")
                 .addData("my_action","SAY_HELLO")
                 .setTtl(1000)
+                .setMessageType("ack")
                 .build());
+        Log.d("SENDING MESSAGE", "Sending your message");
 
     }
 

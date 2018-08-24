@@ -51,16 +51,19 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     @Override
     public void onMessageSent(String s) {
-        //
+        super.onMessageSent(s);
+        Log.d("MESSAGE SENT", s);
     }
 
     @Override
     public void onSendError(String s, Exception e) {
-        //
+        super.onSendError(s, e);
+        Log.d("MESSAGE ERROR", s);
+        Log.d("MESSAGE ERROR EXCEPTION", e.getMessage());
     }
 
     @Override
     public void onDeletedMessages() {
-        //
+        Log.d("MESSAGE DELETED", "Pending message has been deleted");
     }
 }
